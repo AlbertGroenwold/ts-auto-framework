@@ -1,0 +1,24 @@
+We need to build a typescript framework that with playwright and playwright requests.
+We also have to be able to do appium and database testing
+we need to build it in two parts:
+- base framework
+- testing framework that consumes base as a package
+reason for this is because we have multiple teams, and we want to enforce standards
+we also need to have a report saved afterwards
+we also need to save each step into a database, so that we can query trends
+we need three tables:
+- test cases (our test management tool basicly)
+- test runs
+- test run steps
+We need to solve the following:
+- Confidence
+- Tracability
+- Speed comes later
+We also have a k6 framework for the api testing, it would be nice if we could reduce rework where possible
+This framework needs to be reusable and modular, enforcing standards.
+Reporting etc needs to be done automaticly in the base framework, but it should be toggleable, for example if the bqaseframework do not receive db url, it wont try and log it to a db.
+
+
+
+
+please note that the naming I have given them isnt the final one, we need to clean that up as well.

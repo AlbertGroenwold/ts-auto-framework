@@ -1,5 +1,5 @@
 {
-  "id": "e4805191-96bd-47db-bd70-636161ee615d",
+  "id": "a31c0eed-5eea-4d83-8147-727c7355a26d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -59,7 +59,38 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "cases_owner_team_idx": {
+          "name": "cases_owner_team_idx",
+          "columns": [
+            {
+              "expression": "owner_team",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cases_last_seen_at_idx": {
+          "name": "cases_last_seen_at_idx",
+          "columns": [
+            {
+              "expression": "last_seen_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "cases_owner_team_teams_id_fk": {
           "name": "cases_owner_team_teams_id_fk",
@@ -167,7 +198,44 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "runs_case_id_started_at_idx": {
+          "name": "runs_case_id_started_at_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "runs_started_at_idx": {
+          "name": "runs_started_at_idx",
+          "columns": [
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "runs_case_id_cases_id_fk": {
           "name": "runs_case_id_cases_id_fk",
@@ -250,7 +318,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "steps_run_id_idx": {
+          "name": "steps_run_id_idx",
+          "columns": [
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "steps_run_id_runs_id_fk": {
           "name": "steps_run_id_runs_id_fk",

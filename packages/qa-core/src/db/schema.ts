@@ -1,4 +1,4 @@
-import { integer, jsonb, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /** All framework tables live under the shared `qa` schema. */
 export const qa = pgSchema('qa');
@@ -23,7 +23,11 @@ export const cases = qa.table('cases', {
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
   /** Soft-archive marker for cases no longer present in code. */
   archivedAt: timestamp('archived_at', { withTimezone: true }),
-});
+}, (t) => [
+  // per-team views, and the stale-case archive sweep on last_seen_at.
+  index('cases_owner_team_idx').on(t.ownerTeam),
+  index('cases_last_seen_at_idx').on(t.lastSeenAt),
+]);
 
 export const runs = qa.table('runs', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -41,7 +45,12 @@ export const runs = qa.table('runs', {
   ciRunUrl: text('ci_run_url'),
   workerIndex: integer('worker_index'),
   frameworkVer: text('framework_ver'),
-});
+}, (t) => [
+  // per-case trend over time (the core "how has this case behaved" query),
+  // plus a standalone time index for cross-team time-window scans.
+  index('runs_case_id_started_at_idx').on(t.caseId, t.startedAt),
+  index('runs_started_at_idx').on(t.startedAt),
+]);
 
 export const steps = qa.table('steps', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -55,4 +64,7 @@ export const steps = qa.table('steps', {
   errorMessage: text('error_message'),
   errorStack: text('error_stack'),
   payload: jsonb('payload'), // request/response, screenshot refs, etc.
-});
+}, (t) => [
+  // join from a run to its steps.
+  index('steps_run_id_idx').on(t.runId),
+]);

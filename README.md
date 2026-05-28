@@ -108,6 +108,8 @@ Each package versions independently (Changesets). `qa-core` is the only one with
 
 ## How a team uses it
 
+> **Copy-paste starter:** [`examples/starter/`](./examples/starter/). **Full walkthrough:** [docs/getting-started.md](./docs/getting-started.md).
+
 1. **Install:**
    ```bash
    pnpm add -D @<org>/qa-core @<org>/qa-contracts @<org>/qa-env @<org>/eslint-config-qa

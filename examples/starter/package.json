@@ -1,0 +1,21 @@
+{
+  "name": "qa-starter",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "lint": "eslint .",
+    "db:migrate": "qa db migrate",
+    "db:reconcile": "qa db reconcile"
+  },
+  "devDependencies": {
+    "@qa/core": "^0.0.0",
+    "@qa/contracts": "^0.0.0",
+    "@qa/env": "^0.0.0",
+    "@qa/eslint-config": "^0.0.0",
+    "@playwright/test": "^1.60.0",
+    "eslint": "^10.4.0",
+    "typescript": "^6.0.3"
+  }
+}

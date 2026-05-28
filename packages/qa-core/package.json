@@ -3,14 +3,28 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./reporter": "./src/reporter/postgres-reporter.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./reporter": {
+      "types": "./dist/reporter/postgres-reporter.d.ts",
+      "import": "./dist/reporter/postgres-reporter.js"
+    }
   },
   "bin": {
-    "qa": "./src/cli/qa.ts"
+    "qa": "./dist/cli/qa.js"
   },
+  "files": [
+    "dist",
+    "drizzle"
+  ],
   "scripts": {
+    "build": "tsup",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
@@ -26,6 +40,7 @@
     "@types/node": "^25.9.1",
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
+    "tsup": "^8.5.1",
     "typescript": "^6.0.3"
   }
 }

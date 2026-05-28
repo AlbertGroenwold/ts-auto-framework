@@ -134,7 +134,10 @@ async function replay(db: Db, rec: SpoolRecord): Promise<boolean> {
 }
 
 function cmdLint(): void {
-  console.log('[qa] lint: run eslint with @qa/eslint-config-qa (package not yet built).');
+  console.log(
+    '[qa] lint: add `@qa/eslint-config` to your eslint.config and run `eslint .` ' +
+      '(qa lint passthrough not yet implemented).',
+  );
 }
 
 async function main(): Promise<void> {

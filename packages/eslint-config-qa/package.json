@@ -3,10 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsup",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {
@@ -20,6 +30,7 @@
     "@types/estree": "^1.0.9",
     "@types/node": "^25.9.1",
     "eslint": "^10.4.0",
+    "tsup": "^8.5.1",
     "typescript": "^6.0.3"
   }
 }

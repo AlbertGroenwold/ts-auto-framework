@@ -1,6 +1,10 @@
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { createJiti } from 'jiti';
 import { qaConfigSchema, type QaConfig } from './schema';
+
+// jiti transpiles the consumer's qa.config.ts on the fly, so the bare `qa` CLI
+// can load a TypeScript config the same way Playwright does.
+const jiti = createJiti(import.meta.url);
 
 export interface ResolvedConfig {
   config: QaConfig;
@@ -28,7 +32,7 @@ export async function loadConfig(
   const cwd = opts.cwd ?? process.cwd();
   const file = opts.path ? resolve(opts.path) : resolve(cwd, 'qa.config.ts');
 
-  const mod = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
+  const mod = (await jiti.import(file)) as Record<string, unknown>;
   const raw = mod['default'] ?? mod['config'];
 
   const parsed = qaConfigSchema.safeParse(raw);

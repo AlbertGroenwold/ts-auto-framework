@@ -1,0 +1,25 @@
+{
+  "name": "@qa/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "eslint": ">=9"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "typescript-eslint": "^8.60.0"
+  },
+  "devDependencies": {
+    "@types/estree": "^1.0.9",
+    "@types/node": "^25.9.1",
+    "eslint": "^10.4.0",
+    "typescript": "^6.0.3"
+  }
+}

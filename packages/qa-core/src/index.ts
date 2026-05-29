@@ -1,4 +1,6 @@
 export { test, expect } from './fixtures/test';
+export { ContractClient } from './fixtures/api';
+export type { CallOptions, CallResult } from './fixtures/api';
 export { defineConfig } from './config/define';
 export { qaConfigSchema } from './config/schema';
 export type { QaConfig, QaConfigInput, TeamConfig } from './config/schema';

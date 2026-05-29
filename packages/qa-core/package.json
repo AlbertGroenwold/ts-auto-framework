@@ -28,6 +28,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@qa/contracts": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "jiti": "^2.7.0",
     "pg": "^8.21.0",

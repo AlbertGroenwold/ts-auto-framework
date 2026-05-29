@@ -95,6 +95,27 @@ test('logs in', { tag: ['@tc:LOGIN-001'] }, async ({ page }) => {
   trends stay meaningful.
 - Page objects extend `WebBasePage` (see the starter's `pages/login.page.ts`).
 
+### API tests
+
+The `api` fixture drives a `@qa/contracts` contract: it validates the request
+body against the contract, asserts the status, and returns a response already
+parsed against the response schema — so `data` is fully typed.
+
+```ts
+import { test, expect } from '@qa/core';
+import { loginContract } from '@qa/contracts';
+
+test('login returns a token', { tag: ['@tc:LOGIN-002'] }, async ({ api }) => {
+  const { data } = await api.call(loginContract, { email: 'a@b.com', password: 'pw' });
+  expect(data.token).toBeTruthy(); // data is typed from the contract's response schema
+});
+```
+
+- Defaults to asserting **any 2xx**; pass `{ expectStatus: 422 }` to test an error path.
+- A request body the contract rejects throws a `ZodError` **before** the call —
+  a bad payload is a test bug, not an endpoint failure.
+- Relative `path`s resolve against Playwright's `use.baseURL`.
+
 ## 7. Run
 
 ```bash

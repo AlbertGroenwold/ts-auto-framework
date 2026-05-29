@@ -51,12 +51,30 @@ function git(args: string[]): string | undefined {
 }
 
 function detectCiRunUrl(): string | undefined {
-  if (process.env['CI_RUN_URL']) return process.env['CI_RUN_URL'];
-  const server = process.env['GITHUB_SERVER_URL'];
-  const repo = process.env['GITHUB_REPOSITORY'];
-  const runId = process.env['GITHUB_RUN_ID'];
-  if (server && repo && runId) return `${server}/${repo}/actions/runs/${runId}`;
+  const env = process.env;
+  if (env['CI_RUN_URL']) return env['CI_RUN_URL']; // explicit override wins
+  // GitHub Actions
+  if (env['GITHUB_SERVER_URL'] && env['GITHUB_REPOSITORY'] && env['GITHUB_RUN_ID']) {
+    return `${env['GITHUB_SERVER_URL']}/${env['GITHUB_REPOSITORY']}/actions/runs/${env['GITHUB_RUN_ID']}`;
+  }
+  if (env['CI_JOB_URL']) return env['CI_JOB_URL']; // GitLab CI
+  if (env['CIRCLE_BUILD_URL']) return env['CIRCLE_BUILD_URL']; // CircleCI
+  if (env['BUILDKITE_BUILD_URL']) return env['BUILDKITE_BUILD_URL']; // Buildkite
+  if (env['BUILD_URL']) return env['BUILD_URL']; // Jenkins / TeamCity
   return undefined;
+}
+
+/** Per-step JSON: source location + nested title path, so step rows are traceable. */
+function stepPayload(step: TestStep): Record<string, unknown> {
+  const payload: Record<string, unknown> = { titlePath: step.titlePath() };
+  if (step.location) {
+    payload['location'] = {
+      file: step.location.file,
+      line: step.location.line,
+      column: step.location.column,
+    };
+  }
+  return payload;
 }
 
 function frameworkVersion(): string | undefined {
@@ -105,8 +123,51 @@ export class QaPostgresReporter implements Reporter {
     this.options = options;
   }
 
-  onBegin(_config: FullConfig, _suite: Suite): void {
+  onBegin(_config: FullConfig, suite: Suite): void {
+    this.checkStandards(suite); // fail fast before any DB work or test execution
     this.ready = this.init();
+  }
+
+  /**
+   * Startup standards gate: refuse the run if any test lacks a @tc: id, or if a
+   * @tc: id is reused across distinct tests. (Tests fan out across projects, so
+   * we dedupe by source location before judging a collision.) Errors point at
+   * file:line. The per-test fixture guard is the second line of defence.
+   */
+  private checkStandards(suite: Suite): void {
+    const missing = new Map<string, TestCase>();
+    const byId = new Map<string, Map<string, TestCase>>();
+
+    for (const test of suite.allTests()) {
+      const key = `${test.location.file}:${test.location.line}`;
+      const id = this.caseId(test);
+      if (!id) {
+        missing.set(key, test);
+        continue;
+      }
+      let locations = byId.get(id);
+      if (!locations) {
+        locations = new Map();
+        byId.set(id, locations);
+      }
+      locations.set(key, test);
+    }
+
+    const list = (tests: Iterable<TestCase>): string =>
+      [...tests].map((t) => `  ${t.location.file}:${t.location.line} — ${t.title}`).join('\n');
+
+    const problems: string[] = [];
+    if (missing.size > 0) {
+      problems.push(`Tests missing a @tc: annotation:\n${list(missing.values())}`);
+    }
+    for (const [id, locations] of byId) {
+      if (locations.size > 1) {
+        problems.push(`@tc:${id} is reused by ${locations.size} tests:\n${list(locations.values())}`);
+      }
+    }
+    if (problems.length > 0) {
+      throw new Error(`[qa] standards check failed:\n\n${problems.join('\n\n')}\n`);
+    }
   }
 
   private async init(): Promise<void> {
@@ -218,7 +279,7 @@ export class QaPostgresReporter implements Reporter {
       ordinal: i,
       errorMessage: s.error?.message ?? null,
       errorStack: s.error?.stack ?? null,
-      payload: null,
+      payload: stepPayload(s),
     }));
 
     if (!this.dbEnabled || !this.db) return;

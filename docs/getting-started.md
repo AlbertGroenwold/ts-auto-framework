@@ -44,24 +44,26 @@ export default defineConfig({
 
 ## 4. Wire Playwright
 
+`qaPreset()` reads your `qa.config.ts` toggles and returns the `reporter` array
+(HTML + Postgres, honouring `htmlReport`/`reportDir`) plus the recommended
+`trace`/`screenshot`/`video` defaults:
+
 ```ts
 import { defineConfig } from '@playwright/test';
+import { qaPreset } from '@qa/core';
+
+const preset = qaPreset();
 
 export default defineConfig({
-  use: {
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-  },
-  reporter: [
-    ['html'],
-    ['@qa/core/reporter'], // writes runs/steps/cases to Postgres; no-ops without DATABASE_URL
-  ],
+  testDir: './tests',
+  reporter: preset.reporter,
+  use: { ...preset.use, baseURL: process.env.BASE_URL },
 });
 ```
 
-The reporter reads `qa.config.ts` itself, derives git/CI metadata, and buffers
-each test's steps to flush in **one transaction at `onTestEnd`**.
+The Postgres reporter reads `qa.config.ts` itself, derives git/CI metadata, and
+buffers each test's steps to flush in **one transaction at `onTestEnd`**. It
+no-ops when `DATABASE_URL` is unset.
 
 ## 5. Wire ESLint
 
@@ -111,6 +113,10 @@ pnpm exec playwright test
 Schema migrations live in `@qa/core` and are applied out-of-band by central ops
 with `qa db migrate` — individual teams don't migrate.
 
+**Stale cases:** `qa db archive` soft-archives (sets `archived_at`) any case not
+seen in the last `caseArchiveThresholdDays` (default 30) days — typically run on
+a schedule by central ops.
+
 ## 9. Environment variables
 
 | Var | Purpose |
@@ -119,7 +125,7 @@ with `qa db migrate` — individual teams don't migrate.
 | `QA_ENV` | Stored on `qa.runs.env` (e.g. `ci`, `staging`). Defaults to `local`. |
 | `QA_DB_LOGGING` | `0`/`1` to force logging off/on (overrides config). |
 | `QA_BRANCH` / `QA_COMMIT_SHA` | Override the auto-detected git metadata. |
-| `CI_RUN_URL` | One-click link from a future dashboard back to CI. Auto-detected on GitHub Actions. |
+| `CI_RUN_URL` | One-click link from a future dashboard back to CI. Auto-detected on GitHub Actions, GitLab CI, CircleCI, Buildkite, and Jenkins; set explicitly to override. |
 
 ## 10. CI (GitHub Actions)
 

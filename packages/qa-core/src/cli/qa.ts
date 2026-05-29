@@ -2,6 +2,7 @@
 import { readFileSync, readdirSync, renameSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { and, isNull, lt } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { loadConfig } from '../config/load';
 import { createDb, type Db } from '../db/client';
@@ -133,6 +134,28 @@ async function replay(db: Db, rec: SpoolRecord): Promise<boolean> {
   });
 }
 
+/** Soft-archive cases not seen in the last `caseArchiveThresholdDays` days. */
+async function cmdArchive(): Promise<void> {
+  const { config, databaseUrl } = await loadConfig();
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is not set — nothing to do.');
+  }
+  const days = config.caseArchiveThresholdDays;
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const { db, pool } = createDb(databaseUrl);
+  try {
+    const archived = await db
+      .update(cases)
+      .set({ archivedAt: new Date() })
+      .where(and(isNull(cases.archivedAt), lt(cases.lastSeenAt, cutoff)))
+      .returning({ id: cases.id });
+    console.log(`[qa] archived ${archived.length} case(s) not seen in ${days} day(s).`);
+  } finally {
+    await pool.end();
+  }
+}
+
 function cmdLint(): void {
   console.log(
     '[qa] lint: add `@qa/eslint-config` to your eslint.config and run `eslint .` ' +
@@ -150,11 +173,14 @@ async function main(): Promise<void> {
     case 'db reconcile':
       await cmdReconcile();
       break;
+    case 'db archive':
+      await cmdArchive();
+      break;
     case 'lint':
       cmdLint();
       break;
     default:
-      console.log('Usage: qa <db migrate | db reconcile | lint>');
+      console.log('Usage: qa <db migrate | db reconcile | db archive | lint>');
       process.exitCode = cmd ? 1 : 0;
   }
 }

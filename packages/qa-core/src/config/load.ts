@@ -22,19 +22,13 @@ function envBool(value: string | undefined): boolean | undefined {
   return undefined;
 }
 
-/**
- * Load and validate `qa.config.ts` from the consumer repo root, then apply the
- * env-override and DB-toggle rules. Throws a path-pointed error on invalid config.
- */
-export async function loadConfig(
-  opts: { cwd?: string; path?: string } = {},
-): Promise<ResolvedConfig> {
+function configPath(opts: { cwd?: string; path?: string }): string {
   const cwd = opts.cwd ?? process.cwd();
-  const file = opts.path ? resolve(opts.path) : resolve(cwd, 'qa.config.ts');
+  return opts.path ? resolve(opts.path) : resolve(cwd, 'qa.config.ts');
+}
 
-  const mod = (await jiti.import(file)) as Record<string, unknown>;
-  const raw = mod['default'] ?? mod['config'];
-
+/** Validate the raw export and apply env-override / DB-toggle rules. */
+function resolveConfig(raw: unknown, file: string): ResolvedConfig {
   const parsed = qaConfigSchema.safeParse(raw);
   if (!parsed.success) {
     const issues = parsed.error.issues
@@ -52,4 +46,23 @@ export async function loadConfig(
   if (!databaseUrl) dbLoggingEnabled = false;
 
   return { config, databaseUrl, dbLoggingEnabled };
+}
+
+/**
+ * Load and validate `qa.config.ts` from the consumer repo root, then apply the
+ * env-override and DB-toggle rules. Throws a path-pointed error on invalid config.
+ */
+export async function loadConfig(
+  opts: { cwd?: string; path?: string } = {},
+): Promise<ResolvedConfig> {
+  const file = configPath(opts);
+  const mod = (await jiti.import(file)) as Record<string, unknown>;
+  return resolveConfig(mod['default'] ?? mod['config'], file);
+}
+
+/** Synchronous variant — used by {@link qaPreset} at Playwright-config eval time. */
+export function loadConfigSync(opts: { cwd?: string; path?: string } = {}): ResolvedConfig {
+  const file = configPath(opts);
+  const mod = jiti(file) as Record<string, unknown>;
+  return resolveConfig(mod['default'] ?? mod['config'], file);
 }

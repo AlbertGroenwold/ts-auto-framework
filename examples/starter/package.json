@@ -7,7 +7,8 @@
     "test": "playwright test",
     "lint": "eslint .",
     "db:migrate": "qa db migrate",
-    "db:reconcile": "qa db reconcile"
+    "db:reconcile": "qa db reconcile",
+    "db:archive": "qa db archive"
   },
   "devDependencies": {
     "@qa/core": "^0.0.0",
